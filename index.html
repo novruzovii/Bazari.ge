@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ka"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ბაზარი – ყიდვა-გაყიდვა</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f5f7;--card:#fff;--tx:#1a1d24;--mu:#6b7280;--bd:#e3e6eb;--pr:#e8590c;--pr2:#fff4ec}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--card:#1e2126;--tx:#eceef2;--mu:#98a0ad;--bd:#2f343c;--pr:#ff7a33;--pr2:#2b2018}}
+:root[data-theme="dark"]{--bg:#14161a;--card:#1e2126;--tx:#eceef2;--mu:#98a0ad;--bd:#2f343c;--pr:#ff7a33;--pr2:#2b2018}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Noto Sans Georgian",Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--bd)}
+.bar{max-width:1100px;margin:auto;display:flex;gap:10px;align-items:center;padding:10px 14px}
+.logo{font-weight:800;font-size:20px;color:var(--pr);white-space:nowrap}
+.bar input{flex:1;min-width:0}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;width:100%}
+.btn{background:var(--pr);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn.g{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
+main{max-width:1100px;margin:auto;padding:14px}
+.cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
+.chip{border:1px solid var(--bd);background:var(--card);border-radius:20px;padding:6px 14px;cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;cursor:pointer;position:relative}
+.ph{aspect-ratio:4/3;background:var(--pr2);display:flex;align-items:center;justify-content:center;font-size:48px;overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover}
+.cb{padding:10px 12px}.pr{font-weight:800;font-size:17px;color:var(--pr)}
+.tt{margin:2px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mu{color:var(--mu);font-size:13px}
+.fav{position:absolute;top:8px;right:8px;background:var(--card);border:0;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px}
+.tag{display:inline-block;background:var(--pr2);color:var(--pr);border-radius:6px;padding:1px 8px;font-size:12px;font-weight:600}
+.ov{position:fixed;inset:0;background:#0009;display:none;align-items:flex-start;justify-content:center;overflow:auto;z-index:20;padding:20px 12px}
+.ov.on{display:flex}
+.md{background:var(--card);border-radius:16px;max-width:560px;width:100%;padding:18px}
+.md h2{margin:0 0 12px}.f{display:grid;gap:10px}.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer}
+.big{width:100%;max-height:340px;object-fit:contain;background:var(--bg);border-radius:10px}
+.empty{text-align:center;color:var(--mu);padding:50px 10px}
+</style></head><body>
+<header><div class="bar"><span class="logo">🛍️ ბაზარი</span>
+<input id="q" placeholder="ძებნა: ტელეფონი, ველოსიპედი, დივანი…">
+<button class="btn" onclick="openAdd()">+ დამატება</button></div></header>
+<main>
+<div class="cats" id="cats"></div>
+<div class="filters">
+<select id="cond"><option value="">მდგომარეობა: ყველა</option><option>ახალი</option><option>ახალივით</option><option>მეორადი</option></select>
+<input id="pmin" type="number" min="0" placeholder="მინ. ფასი ₾">
+<input id="pmax" type="number" min="0" placeholder="მაქს. ფასი ₾">
+<input id="city" placeholder="ქალაქი">
+<select id="sort"><option value="new">უახლესი</option><option value="asc">ფასი ↑</option><option value="desc">ფასი ↓</option></select>
+<button class="btn g" id="favb" onclick="favOnly=!favOnly;render()">♡ რჩეულები</button>
+</div>
+<div class="grid" id="grid"></div>
+</main>
+
+<div class="ov" id="ovAdd"><div class="md"><h2>ახალი განცხადება</h2><div class="f">
+<input id="aT" placeholder="სათაური *" maxlength="80">
+<div class="r2"><select id="aC"></select><select id="aS"><option>მეორადი</option><option>ახალივით</option><option>ახალი</option></select></div>
+<div class="r2"><input id="aP" type="number" min="0" placeholder="ფასი *"><select id="aK"><option>₾</option><option>$</option><option>€</option></select></div>
+<div class="r2"><input id="aCi" placeholder="ქალაქი *"><input id="aPh" placeholder="ტელეფონი *" inputmode="tel"></div>
+<textarea id="aD" rows="4" placeholder="აღწერა"></textarea>
+<input id="aF" type="file" accept="image/*" multiple>
+<div class="thumbs" id="aTh"></div>
+<div class="r2"><button class="btn g" onclick="cl('ovAdd')">გაუქმება</button><button class="btn" onclick="save()">გამოქვეყნება</button></div>
+</div></div></div>
+<div class="ov" id="ovDet"><div class="md" id="det"></div></div>
+
+<script>
+var CATS=[["📱","ტელეფონი"],["💻","კომპიუტერი"],["📺","ტექნიკა"],["🏠","სახლი და ავეჯი"],["👕","ტანსაცმელი"],["🚲","სპორტი"],["🧸","საბავშვო"],["📚","წიგნები და ჰობი"],["🛠️","მომსახურება"],["📦","სხვა"]];
+var n=Date.now(),H=36e5;
+function S(i,t,c,s,p,ci,d){return{id:"s"+i,t:t,c:c,s:s,p:p,k:"₾",ci:ci,ph:"+995 555 00 00 "+(10+i),d:d,im:[],ts:n-i*H,own:0}}
+var SEED=[
+S(1,"iPhone 13 128GB, ყუთით","ტელეფონი","მეორადი",1450,"თბილისი","ბატარეის მდგომარეობა 89%, ნაკაწრების გარეშე."),
+S(2,"Samsung Galaxy A54 256GB","ტელეფონი","ახალივით",720,"ბათუმი","გარანტიით, სრული კომპლექტი."),
+S(3,"MacBook Air M1 8/256","კომპიუტერი","მეორადი",2100,"თბილისი","იდეალურ მდგომარეობაში, დამტენით."),
+S(4,"Lenovo IdeaPad ლეპტოპი i5","კომპიუტერი","მეორადი",1200,"ქუთაისი","16GB RAM, 512GB SSD."),
+S(5,"PlayStation 5 + 2 ჯოისტიკი","ტექნიკა","მეორადი",1350,"ბათუმი","3 თამაშით."),
+S(6,"Samsung ტელევიზორი 50\" 4K","ტექნიკა","ახალი",890,"თბილისი","Smart TV, გარანტია 1 წელი."),
+S(7,"AirPods Pro (2-ე თაობა)","ტექნიკა","ახალი",380,"თბილისი","დალუქული ყუთი."),
+S(8,"LG სარეცხი მანქანა 8 კგ","ტექნიკა","ახალივით",780,"რუსთავი","2 წელი გამოყენებული."),
+S(9,"სამადგილიანი დივანი","სახლი და ავეჯი","მეორადი",650,"თბილისი","სუფთა, ლაქების გარეშე."),
+S(10,"სამზარეულოს მაგიდა + 4 სკამი","სახლი და ავეჯი","ახალი",410,"ქუთაისი","მუხის ფერი."),
+S(11,"მთის ველოსიპედი 27.5\"","სპორტი","ახალივით",480,"თბილისი","ერთი სეზონი გამოყენებული."),
+S(12,"ზამთრის ქურთუკი, M ზომა","ტანსაცმელი","ახალი",120,"ბათუმი","ეტიკეტით."),
+S(13,"ბავშვის ეტლი 3-ერთში","საბავშვო","მეორადი",260,"თბილისი","კარგ მდგომარეობაში."),
+S(14,"ქართული ლიტერატურის კრებული (12 წიგნი)","წიგნები და ჰობი","მეორადი",45,"ქუთაისი","სრული კომპლექტი."),
+S(15,"ბინის შეღებვა და რემონტი","მომსახურება","ახალი",15,"თბილისი","ფასი 1 მ²-ზე, მასალა არ შედის.")];
+var items=[],favs=[],cat="",favOnly=false,DB=null,myId="",pics=[];
+function ld(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+items=ld("bz_items",[]);favs=ld("bz_favs",[]);
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function $(i){return document.getElementById(i)}
+function cl(i){$(i).classList.remove("on")}
+function icon(c){for(var i=0;i<CATS.length;i++)if(CATS[i][1]==c)return CATS[i][0];return"📦"}
+function drawCats(){var h='<span class="chip'+(cat?'':' on')+'" onclick="cat=\'\';drawCats();render()">ყველა</span>';
+CATS.forEach(function(c){h+='<span class="chip'+(cat==c[1]?' on':'')+'" onclick="cat=\''+c[1]+'\';drawCats();render()">'+c[0]+' '+c[1]+'</span>'});
+$("cats").innerHTML=h;$("aC").innerHTML=CATS.map(function(c){return"<option>"+c[1]+"</option>"}).join("")}
+function money(i){return Number(i.p).toLocaleString("en-US")+" "+i.k}
+function render(){
+var q=$("q").value.toLowerCase(),co=$("cond").value,mn=parseFloat($("pmin").value),mx=parseFloat($("pmax").value),ci=$("city").value.toLowerCase();
+var l=SEED.concat(items).filter(function(i){return(!cat||i.c==cat)&&(!co||i.s==co)&&(!q||(i.t+" "+i.d).toLowerCase().indexOf(q)>-1)&&(isNaN(mn)||i.p>=mn)&&(isNaN(mx)||i.p<=mx)&&(!ci||i.ci.toLowerCase().indexOf(ci)>-1)&&(!favOnly||favs.indexOf(String(i.id))>-1)});
+var s=$("sort").value;l.sort(function(a,b){return s=="asc"?a.p-b.p:s=="desc"?b.p-a.p:b.ts-a.ts});
+$("favb").style.background=favOnly?"var(--pr2)":"";
+$("grid").innerHTML=l.length?l.map(function(i){return'<div class="card" onclick="show(\''+i.id+'\')"><button class="fav" onclick="event.stopPropagation();fav(\''+i.id+'\')">'+(favs.indexOf(String(i.id))>-1?"❤️":"🤍")+'</button><div class="ph">'+(i.im[0]?'<img src="'+i.im[0]+'" alt="">':icon(i.c))+'</div><div class="cb"><div class="pr">'+money(i)+'</div><div class="tt">'+esc(i.t)+'</div><div class="mu">'+esc(i.ci)+' · <span class="tag">'+esc(i.s)+'</span></div></div></div>'}).join(""):'<div class="empty" style="grid-column:1/-1">განცხადება ვერ მოიძებნა.</div>'}
+function fav(id){id=String(id);var x=favs.indexOf(id);x>-1?favs.splice(x,1):favs.push(id);sv("bz_favs",favs);render()}
+function show(id){var i=SEED.concat(items).filter(function(z){return String(z.id)==id})[0];if(!i)return;
+$("det").innerHTML=(i.im[0]?'<img class="big" id="bg" src="'+i.im[0]+'" alt=""><div class="thumbs" style="margin:8px 0">'+i.im.map(function(m){return'<img src="'+m+'" onclick="$(\'bg\').src=this.src" alt="">'}).join("")+'</div>':'<div class="ph" style="border-radius:10px">'+icon(i.c)+'</div>')+
+'<div class="pr" style="font-size:24px;margin-top:8px">'+money(i)+'</div><h2 style="margin:4px 0">'+esc(i.t)+'</h2><div class="mu">'+esc(i.c)+' · '+esc(i.ci)+' · <span class="tag">'+esc(i.s)+'</span> · '+new Date(i.ts).toLocaleDateString("ka-GE")+'</div><p style="white-space:pre-wrap">'+esc(i.d||"აღწერა არ არის.")+'</p><div class="r2"><a class="btn" style="text-align:center;text-decoration:none" href="tel:'+esc(i.ph.replace(/[^+\d]/g,""))+'">📞 '+esc(i.ph)+'</a><button class="btn g" onclick="cl(\'ovDet\')">დახურვა</button></div>'+(i.own?'<button class="btn g" style="margin-top:10px;width:100%" onclick="del(\''+i.id+'\')">🗑️ განცხადების წაშლა</button>':'');
+$("ovDet").classList.add("on")}
+function del(id){if(!confirm("წავშალოთ ეს განცხადება?"))return;
+if(DB){DB.collection("listings").doc(id).delete().then(function(){cl("ovDet")},function(){alert("წაშლა ვერ მოხერხდა.")});return}
+items=items.filter(function(i){return String(i.id)!=id});sv("bz_items",items);cl("ovDet");render()}
+function openAdd(){pics=[];$("aTh").innerHTML="";["aT","aP","aCi","aPh","aD","aF"].forEach(function(i){$(i).value=""});$("ovAdd").classList.add("on")}
+$("aF").onchange=function(e){Array.prototype.slice.call(e.target.files,0,3-pics.length).forEach(function(f){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var m=600,sc=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*sc;c.height=im.height*sc;c.getContext("2d").drawImage(im,0,0,c.width,c.height);var u=c.toDataURL("image/jpeg",.6);pics.push(u);$("aTh").innerHTML+='<img src="'+u+'" alt="">'};im.src=r.result};r.readAsDataURL(f)})};
+function save(){var t=$("aT").value.trim(),p=parseFloat($("aP").value),ci=$("aCi").value.trim(),ph=$("aPh").value.trim();
+if(!t||isNaN(p)||!ci||!ph){alert("სათაური, ფასი, ქალაქი და ტელეფონი სავალდებულოა.");return}
+var o={t:t,c:$("aC").value,s:$("aS").value,p:p,k:$("aK").value,ci:ci,ph:ph,d:$("aD").value.trim(),im:pics.slice(),ts:Date.now()};
+if(DB){o.o=myId;DB.collection("listings").add(o).then(function(){cl("ovAdd")},function(){alert("განცხადება ვერ შეინახა. სცადეთ ნაკლები/პატარა ფოტო.")});return}
+o.id=Date.now();o.own=1;items.unshift(o);
+if(!sv("bz_items",items)){alert("მეხსიერება გაივსო; განცხადება ვერ შეინახა.");items.shift();return}
+cl("ovAdd");render()}
+["q","pmin","pmax","city"].forEach(function(i){$(i).oninput=render});["cond","sort"].forEach(function(i){$(i).onchange=render});
+document.querySelectorAll(".ov").forEach(function(o){o.onclick=function(e){if(e.target==o)o.classList.remove("on")}});
+drawCats();render();
+(async function(){try{var u=await claude.use("user"),d=await claude.use("db");if(!d||!u)return;myId=await u.id();DB=d;items=[];render();d.collection("listings").onSnapshot(function(sn){items=sn.docs.map(function(x){var o=x.data();o.id=x.id;o.own=o.o===myId;o.im=o.im||[];return o});render()},function(){})}catch(e){}})();
+</script></body></html>
